@@ -10,11 +10,11 @@ import java.util.List;
 public class LoanData {
 
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long loanId;
     private Long loanAmount;
-    @OneToOne
-//    @OneToOne(cascade = CascadeType.ALL)
+
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "bank_userId") // This is the foreign key column
     private Bank bank;
     private String needLoan;

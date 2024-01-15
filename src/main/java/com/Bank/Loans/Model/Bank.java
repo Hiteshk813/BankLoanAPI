@@ -9,10 +9,11 @@ import org.springframework.stereotype.Component;
 public class Bank {
 
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String userName;
     private float phoneNumber;
+
     private String accountNumber;
     private String bankBranch;
 //    private LoanData loanData;

@@ -1,0 +1,51 @@
+Bank API
+
+Bank :
+User will create account
+Can apply for loan too
+Loan rate is set by Bank itself
+Loan will only be given if conditions meet
+Set loan rate from YML
+Once loan is approved , user will receive a file which has some confidential details in it
+(Congratulations MR abc, you loan is approved text and with loan details and stuff)
+
+User can request (GET) to fetch his loan details
+
+Methods  :
+First try creating FILE IO methods to
+post a request, save info to DB and save info as file in some path (LZ) which is mentioned in the application -- done
+
+POST - to create account and save details in DB - (USER access)  -- done
+GET - get all users details (Security , only ADMIN has access to it )  -- done
+GET BY PARAMETERS - only ADMIN has access  -- done
+GET REQUEST TO CHECK IF USER IS UNDER LOAN - ADMIN  -- done
+PUT PATCH  -  only ADMIN has access
+DELETE BY PARAMETERS : only ADMIN has access
+
+POST - to apply for loan and expect file as an output (USER access)-- ?
+GET loan details - user request for loan details , file as output (USER access)  -- ?
+
+TDD : Learn and write TDD for all classes
+Understand and make notes of the application
+
+Logging
+Exception Handling
+Security :
+Add JWT security
+Refer JWT API and other one
+Give USER and ADMIN access to specific requests
+Quartz Scheduler and Reprocess data
+---------------------------------------------------------------
+Add code to git
+git ignore files
+SonarQube : Check coverage and coding standards too
+Gradle and Maven commands
+Jenkins pipeline
+
+
+
+
+
+
+
+

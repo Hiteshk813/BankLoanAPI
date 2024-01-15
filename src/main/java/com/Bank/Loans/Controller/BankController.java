@@ -5,13 +5,33 @@ import com.Bank.Loans.Model.LoanData;
 import com.Bank.Loans.Repository.BankRepository;
 import com.Bank.Loans.Repository.LoanRepository;
 import com.Bank.Loans.Service.BankService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 public class BankController {
+
+    Logger logger = LoggerFactory.getLogger(BankController.class);
 
     private final BankService bankService;
 
@@ -25,10 +45,81 @@ public class BankController {
         this.loanRepository = loanRepository;
     }
 
+    @PostMapping("/getLoan")
+    // user applies for a loan, it will accept or reject based on the conditions specified - working
+    public ResponseEntity<String> applyLoan(@RequestBody LoanData loanData, String userName, List<LoanData> loanDataList) {
+        Bank bankUser = bankRepository.findByuserName(userName);
+        if (bankUser != null || loanData.getLoanAmount() > 10000000 || loanData.getLoadDuration() > 10) {
+            loanData.setLoanStatus("Rejected");
+            loanRepository.save(loanData);
+            return ResponseEntity.badRequest().body("Sorry, loan rejected");
+        } else {
+            loanData.setLoanStatus("Accepted");
+            loanRepository.save(loanData);
+            File outputFile = generateBankFile(loanDataList);
+            return ResponseEntity.ok("Congratulations. Your Loan has been accepted, you will receive a message shortly.....!");
+
+        }
+    }
+
+    @PostMapping("/getLoanAPI")
+    public ResponseEntity<String> saveBankUser(@RequestBody List<LoanData> loanDataList, String userName) {
+        Bank bankUser = bankRepository.findByuserName(userName);
+
+        for (LoanData loanData : loanDataList) {
+            if (bankUser != null || loanData.getLoanAmount() > 10000000 || loanData.getLoadDuration() > 10) {
+                loanData.setLoanStatus("Rejected");
+                loanRepository.save(loanData);
+
+            } else {
+                loanData.setLoanStatus("Accepted");
+                loanRepository.save(loanData);
+                List<LoanData> savedLoanDataList = loanRepository.saveAll(loanDataList);
+                File outputFile = generateBankFile(loanDataList);
+            }
+        }
+
+//        List<LoanData> savedLoanDataList = loanRepository.saveAll(loanDataList);
+//        File outputFile = generateBankFile(savedLoanDataList);
+
+        return new ResponseEntity<>("Loan Applied successfully, please wait", HttpStatus.OK);
+    }
+
+    private File generateBankFile(List<LoanData> loanDataList) {
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String fileName = "output_" + timestamp + ".txt";
+
+        // Construct the file path
+        String filePath = "C:/Files/Gen/" + fileName;
+        File outputFile = new File(filePath);
+
+        LocalDate approvalLocalDate;
+        Date loanApprovalDate = new Date();
+        LocalDate repayTime;
+        long daysLeft;
+        try (FileWriter fileWriter = new FileWriter(outputFile, StandardCharsets.UTF_8)) {
+            for (LoanData loanData : loanDataList) {
+                fileWriter.write("Congratulations. Your Loan request has been approved");
+                fileWriter.write("LoanStatus : " + loanData.getLoanStatus() + "\n");
+                fileWriter.write("Interest Rate : " + loanData.getInterest() + "\n");
+                fileWriter.write("Loan Duration: " + loanData.getLoadDuration() + " years" + "\n");
+                approvalLocalDate = loanApprovalDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                repayTime = approvalLocalDate.plusYears(loanData.getLoadDuration());
+                daysLeft = ChronoUnit.DAYS.between(approvalLocalDate, repayTime);
+                fileWriter.write("Loan needs to paid in " + daysLeft + " days " + "\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate file", e);
+        }
+
+        return outputFile;
+    }
 
     @GetMapping("/hi")
     public String hi() {
+        logger.info("hi method is invoked......");
         return "Hello";
+
     }
 
     @GetMapping("/getBankUsers")   // gets all users - working
@@ -49,58 +140,27 @@ public class BankController {
 
     }
 
-//    @PostMapping("/saveBankUsersLoan")
-//    public ResponseEntity<String> saveBankUserApplyingForLoan(@RequestBody LoanData loanData, String userName) {
-//
-////        String needLoan = "YES";
-////        if (loanData.getNeedLoan().equals(needLoan)) {
-////            loanData.setLoanStatus(loanData.getLoanStatus());
-////            loanData.setLoanAmount(loanData.getLoanAmount());
-////            loanData.setLoanPurpose(loanData.getLoanPurpose());
-////            loanData.setInterest(loanData.getInterest());
-////            loanData.setLoanDate(loanData.getLoanDate());
-////            loanData.setLoadDuration(loanData.getLoadDuration());
-////            loanRepository.save(loanData);
-////            return ResponseEntity.ok("User loan data saved successfully");
-////
-////        } else
-////            loanData.setLoanStatus(null);
-////        loanData.setLoanAmount(null);
-////        loanData.setLoanPurpose(null);
-////        loanData.setInterest(0);
-////        loanData.setLoanDate(null);
-////        loanData.setLoadDuration(0);
-//
-//        //    public ResponseEntity<String> applyLoan(LoanData loanData, String userName) {
-//        Bank bankUser = bankRepository.findByuserName(userName);
-//        if (bankUser != null || loanData.getLoanAmount() >= 10000000 || loanData.getLoadDuration() > 10) {
-//            loanData.setLoanStatus(loanData.getLoanStatus());
-//            loanData.setLoanAmount(loanData.getLoanAmount());
-//            loanData.setLoanPurpose(loanData.getLoanPurpose());
-//            loanData.setInterest(loanData.getInterest());
-//            loanData.setLoanDate(loanData.getLoanDate());
-//            loanData.setLoadDuration(loanData.getLoadDuration());
-//            loanRepository.save(loanData);
-////            return ResponseEntity.ok("User loan data saved successfully");
-//            return ResponseEntity.badRequest().body("Sorry, loan rejected");
-//        } else {
-//            loanData.setLoanStatus(loanData.getLoanStatus());
-//            loanData.setLoanAmount(loanData.getLoanAmount());
-//            loanData.setLoanPurpose(loanData.getLoanPurpose());
-//            loanData.setInterest(loanData.getInterest());
-//            loanData.setLoanDate(loanData.getLoanDate());
-//            loanData.setLoadDuration(loanData.getLoadDuration());
-//            loanRepository.save(loanData);
-//            loanRepository.save(loanData);
-//            return ResponseEntity.ok("Congratulations. Your Loan has been accepted, you will receive a message shortly.....!");
-//        }
-//    }
-//        loanRepository.save(loanData);
-//        return ResponseEntity.ok("User has not requested for any loan........");
-//
-//    }
 
-    @GetMapping("/getByName/{userName}")
+    @GetMapping("/getNamesByA")   // gets all users - working
+//   Invoke http://localhost:8085/getNamesByA?startingWith=K
+    public List<Bank> nameStartingWithA(@RequestParam String startingWith) {
+        return bankRepository.findAll().stream()
+                .filter(a -> a.getUserName().startsWith(startingWith))
+                .collect(Collectors.toList());
+
+    }
+
+    // get by name
+    // Invoke http://localhost:8085/getNames?userName=Adam
+    @GetMapping("/getNames")   // gets all users - working
+    public Bank getBankUser(@RequestParam String userName) {
+        return bankRepository.findByuserName(userName);  // will show 200 ok even if user not found
+    }
+
+    // Another way to fetch records by names
+    // Path variable is used here
+    // Invoke http://localhost:8085/getByName/Krishna
+    @GetMapping("/getByName/{userName}") // working
     public ResponseEntity<Bank> getByName(@PathVariable String userName) {
         Bank bank = bankService.findByName(userName);
         if (bank != null) {
@@ -110,34 +170,19 @@ public class BankController {
         }
     }
 
-    @PostMapping("/getLoan")
-    // user applies for a loan, it will accept or reject based on the conditions specified - working
-    public ResponseEntity<String> applyLoan(@RequestBody LoanData loanData, String userName, Bank bank) {
-        Bank bankUser = bankRepository.findByuserName(userName);
-        if (bankUser != null || loanData.getLoanAmount() > 10000000 || loanData.getLoadDuration() > 10) {
-            loanData.setLoanStatus("Rejected");
-            loanRepository.save(loanData);
-            return ResponseEntity.badRequest().body("Sorry, loan rejected");
-        } else {
-            loanData.setLoanStatus("Accepted");
-            loanRepository.save(loanData);
-            return ResponseEntity.ok("Congratulations. Your Loan has been accepted, you will receive a message shortly.....!");
-        }
+    @GetMapping("/getByAcNum/{account_number}")
+    public List<Bank> getByAcNbr(@PathVariable String account_number) {
+        List<Bank> banks = bankRepository.findAll().stream()
+                .filter(a -> a.getAccountNumber().equals(account_number))
+                .collect(Collectors.toList());
+
+        if (banks.isEmpty()) {
+            return Collections.emptyList();
+        } else
+            return banks;
     }
 
-    //    @GetMapping("/underLoan/{loanId}")
-//    public ResponseEntity<String> IsAcNbrUnderLoan(@PathVariable int loanId,LoanData loanData) {
-////        LoanData loanData = loanRepository.getByloanStatus("ACCEPTED");
-//
-//        String status = "REJECTED";
-//        if (loanData.getLoanStatus().equals(status)) {
-//            return ResponseEntity.badRequest().body("No loans found for " + loanId);
-//
-//        } else
-////            loanData = loanRepository.getByloanStatus(loanId);
-//            return ResponseEntity.ok(loanData + " is under loan");
-//
-//    }
+
     @GetMapping("/underLoan/{loanId}")
     public ResponseEntity<String> IsAcNbrUnderLoan1(@PathVariable int loanId) {
         LoanData loanData = loanRepository.findByLoanId(loanId); // Replace with the actual method in your repository
@@ -179,10 +224,38 @@ public class BankController {
             return ResponseEntity.ok("There are " + count + " bank accounts in this bank whose loan is rejected......");
 
         }
+    }
+
+    @DeleteMapping("/delete/{account_number}")
+    public ResponseEntity<String> deleteUser(Bank bank, @PathVariable String account_number) {
+        List<Bank> bankList = bankRepository.findAll().stream().filter(a -> a.getAccountNumber().equals(account_number))
+                .collect(Collectors.toList());
+        if (bankList.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+
+        }
+        bankRepository.deleteAll(bankList);
+
+        return ResponseEntity.ok("User(s) deleted successfully");
 
     }
 
+    @PutMapping("/update/{userId}")
+    public ResponseEntity<String> updateUserDetails(@PathVariable Long userId, @RequestBody Bank updateBankUser) {
+
+        if (!bankRepository.existsById(userId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+
+        }
+        Bank existingUser = bankRepository.findById(userId).orElseThrow();
+        existingUser.setUserName(updateBankUser.getUserName());
+        existingUser.setAccountNumber(updateBankUser.getAccountNumber());
+        bankRepository.save(existingUser);
+        return ResponseEntity.ok("User updated successfully");
+
+    }
 }
+
 
 // get user details by account number or any parameter - done
 // get if that account number is under loan - done
