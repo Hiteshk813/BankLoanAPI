@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
+@RequestMapping("/auth")
 public class BankController {
 
     Logger logger = LoggerFactory.getLogger(BankController.class);
@@ -46,6 +48,7 @@ public class BankController {
     }
 
     @PostMapping("/getLoan")
+    @PreAuthorize("hasAuthority('USER_ROLES')")
     // user applies for a loan, it will accept or reject based on the conditions specified - working
     public ResponseEntity<String> applyLoan(@RequestBody LoanData loanData, String userName, List<LoanData> loanDataList) {
         Bank bankUser = bankRepository.findByuserName(userName);
@@ -63,6 +66,7 @@ public class BankController {
     }
 
     @PostMapping("/getLoanAPI")
+    @PreAuthorize("hasAuthority('USER_ROLES')")
     public ResponseEntity<String> apply_For_A_Loan(@RequestBody List<LoanData> loanDataList, String userName) {
         Bank bankUser = bankRepository.findByuserName(userName);
 
@@ -116,6 +120,7 @@ public class BankController {
     }
 
     @GetMapping("/hi")
+    @PreAuthorize("hasAuthority('USER_ROLES')")
     public String hi() {
         logger.info("hi method is invoked......");
         return "Hello";
@@ -123,11 +128,13 @@ public class BankController {
     }
 
     @GetMapping("/getBankUsers")   // gets all users - working
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
     public List<Bank> getBankList() {
         return bankService.getBankMembers();
     }
 
     @PostMapping("/saveBankUsers")  // creates a bank account of a user and saves details - working
+    @PreAuthorize("hasAuthority('USER_ROLES')")
     public ResponseEntity<String> saveBankList(@RequestBody Bank bank) {
 
         Bank existingUser = bankRepository.findByuserName(bank.getUserName());
@@ -142,6 +149,7 @@ public class BankController {
 
 
     @GetMapping("/getNamesByA")   // gets all users - working
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
 //   Invoke http://localhost:8085/getNamesByA?startingWith=K
     public List<Bank> nameStartingWithA(@RequestParam String startingWith) {
         return bankRepository.findAll().stream()
@@ -153,6 +161,7 @@ public class BankController {
     // get by name
     // Invoke http://localhost:8085/getNames?userName=Adam
     @GetMapping("/getNames")   // gets all users - working
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
     public Bank getBankUser(@RequestParam String userName) {
         return bankRepository.findByuserName(userName);  // will show 200 ok even if user not found
     }
@@ -161,6 +170,7 @@ public class BankController {
     // Path variable is used here
     // Invoke http://localhost:8085/getByName/Krishna
     @GetMapping("/getByName/{userName}") // working
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
     public ResponseEntity<Bank> getByName(@PathVariable String userName) {
         Bank bank = bankService.findByName(userName);
         if (bank != null) {
@@ -171,6 +181,7 @@ public class BankController {
     }
 
     @GetMapping("/getByAcNum/{account_number}")
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
     public List<Bank> getByAcNbr(@PathVariable String account_number) {
         List<Bank> banks = bankRepository.findAll().stream()
                 .filter(a -> a.getAccountNumber().equals(account_number))
@@ -184,6 +195,7 @@ public class BankController {
 
 
     @GetMapping("/underLoan/{loanId}")
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
     public ResponseEntity<String> IsAcNbrUnderLoan1(@PathVariable int loanId) {
         LoanData loanData = loanRepository.findByLoanId(loanId); // Replace with the actual method in your repository
 
@@ -200,6 +212,7 @@ public class BankController {
     }
 
     @GetMapping("/accountNbr/{accountNumber}")  // will fetch the user details by passing account number - working
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
     public ResponseEntity<Bank> getUserByAcNbr(@PathVariable String accountNumber) {
         Bank bank = bankRepository.getUserByaccountNumber(accountNumber);
 
@@ -227,6 +240,7 @@ public class BankController {
     }
 
     @DeleteMapping("/delete/{account_number}")
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
     public ResponseEntity<String> deleteUser( @PathVariable String account_number) {
         List<Bank> bankList = bankRepository.findAll().stream().filter(a -> a.getAccountNumber().equals(account_number))
                 .collect(Collectors.toList());
@@ -241,6 +255,7 @@ public class BankController {
     }
 
     @PutMapping("/update/{userId}")
+    @PreAuthorize("hasAuthority('ADMIN_ROLES')")
     public ResponseEntity<String> updateUserDetails(@PathVariable Long userId, @RequestBody Bank updateBankUser) {
 
         if (!bankRepository.existsById(userId)) {
