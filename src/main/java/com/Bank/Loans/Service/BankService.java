@@ -30,29 +30,12 @@ public class BankService {
         return bankRepository.findAll();
     }
 
-//    public ResponseEntity<String> saveMember(Bank bankUser) {
-//        Bank existingUser = bankRepository.findByName(bankUser.getUserName());
-//        if (existingUser != null) {
-//            return ResponseEntity.badRequest().body("User already exists");
-//        } else {
-//            bankRepository.save(bankUser);
-//            return ResponseEntity.ok("User created");
-//        }
-//    }
 
     public Bank findByName(String userName) {
         return bankRepository.findByuserName(userName);
     }
 
-//    public ResponseEntity<String> applyLoan(LoanData loanData, String userName) {
-//        Bank bankUser = bankRepository.findByuserName(userName);
-//        if (bankUser != null || loanData.getLoanAmount() >= 10000000 || loanData.getLoadDuration() > 10) {
-//            return ResponseEntity.badRequest().body("Sorry, loan rejected");
-//        } else {
-//            loanRepository.save(loanData);
-//            return ResponseEntity.ok("Congratulations. Your Loan has been accepted, you will receive a message shortly.....!");
-//        }
-//    }
+
 }
 
 

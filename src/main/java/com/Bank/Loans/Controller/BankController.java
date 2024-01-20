@@ -63,7 +63,7 @@ public class BankController {
     }
 
     @PostMapping("/getLoanAPI")
-    public ResponseEntity<String> saveBankUser(@RequestBody List<LoanData> loanDataList, String userName) {
+    public ResponseEntity<String> apply_For_A_Loan(@RequestBody List<LoanData> loanDataList, String userName) {
         Bank bankUser = bankRepository.findByuserName(userName);
 
         for (LoanData loanData : loanDataList) {
@@ -85,7 +85,7 @@ public class BankController {
         return new ResponseEntity<>("Loan Applied successfully, please wait", HttpStatus.OK);
     }
 
-    private File generateBankFile(List<LoanData> loanDataList) {
+    File generateBankFile(List<LoanData> loanDataList) {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String fileName = "output_" + timestamp + ".txt";
 
@@ -227,7 +227,7 @@ public class BankController {
     }
 
     @DeleteMapping("/delete/{account_number}")
-    public ResponseEntity<String> deleteUser(Bank bank, @PathVariable String account_number) {
+    public ResponseEntity<String> deleteUser( @PathVariable String account_number) {
         List<Bank> bankList = bankRepository.findAll().stream().filter(a -> a.getAccountNumber().equals(account_number))
                 .collect(Collectors.toList());
         if (bankList.isEmpty()) {

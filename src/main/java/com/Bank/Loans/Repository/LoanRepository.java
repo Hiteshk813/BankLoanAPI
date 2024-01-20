@@ -12,5 +12,5 @@ public interface LoanRepository extends JpaRepository<LoanData, Long> {
 //    LoanData getByloanStatusAndloanId(String accepted, int loanId);
 
 
-    LoanData findByLoanId(int loanId);
+    LoanData findByLoanId(long loanId);
 }
