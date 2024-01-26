@@ -1,5 +1,7 @@
 package com.Bank.Loans.Controller;
 
+import com.Bank.Loans.Exceptions.CustomException;
+import com.Bank.Loans.Exceptions.CustomNotFoundException;
 import com.Bank.Loans.Model.Bank;
 import com.Bank.Loans.Model.LoanData;
 import com.Bank.Loans.Repository.BankRepository;
@@ -47,11 +49,24 @@ public class BankController {
         this.loanRepository = loanRepository;
     }
 
+    @GetMapping("/hello/{name}")
+    @PreAuthorize("hasAuthority('USER_ROLES')")
+    public ResponseEntity<String> hello(@PathVariable String name) {
+        if ("john".equalsIgnoreCase(name)) {
+            throw new CustomNotFoundException("User not found");
+        }
+        return ResponseEntity.ok("Hello, " + name + "!");
+    }
+
+
     @PostMapping("/getLoan")
     @PreAuthorize("hasAuthority('USER_ROLES')")
     // user applies for a loan, it will accept or reject based on the conditions specified - working
     public ResponseEntity<String> applyLoan(@RequestBody LoanData loanData, String userName, List<LoanData> loanDataList) {
-        Bank bankUser = bankRepository.findByuserName(userName);
+
+       try{
+           Bank bankUser = bankRepository.findByuserName(userName);
+
         if (bankUser != null || loanData.getLoanAmount() > 10000000 || loanData.getLoadDuration() > 10) {
             loanData.setLoanStatus("Rejected");
             loanRepository.save(loanData);
@@ -61,8 +76,14 @@ public class BankController {
             loanRepository.save(loanData);
             File outputFile = generateBankFile(loanDataList);
             return ResponseEntity.ok("Congratulations. Your Loan has been accepted, you will receive a message shortly.....!");
-
         }
+
+        } catch (Exception e) {
+//           throw new RuntimeException(e);
+           e.printStackTrace();
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+
+       }
     }
 
     @PostMapping("/getLoanAPI")
@@ -74,6 +95,7 @@ public class BankController {
             if (bankUser != null || loanData.getLoanAmount() > 10000000 || loanData.getLoadDuration() > 10) {
                 loanData.setLoanStatus("Rejected");
                 loanRepository.save(loanData);
+                throw new CustomException("Oops, something went wrong.....!Please recheck");
 
             } else {
                 loanData.setLoanStatus("Accepted");
@@ -139,7 +161,8 @@ public class BankController {
 
         Bank existingUser = bankRepository.findByuserName(bank.getUserName());
         if (existingUser != null) {
-            return ResponseEntity.badRequest().body("User already exists");
+//            return ResponseEntity.badRequest().body("User already exists");
+            throw new CustomException("User already exists");
 
         }
         bankRepository.save(bank);
